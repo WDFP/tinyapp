@@ -44,6 +44,14 @@ app.post("/urls/:id/delete", (req, res) => {
 //update
 app.post('/urls/:id', (req, res) => {
   const longURL = req.body.longURL;
+  if (!longURL) {
+    return res.send("Please provide longURL");
+  }
+
+  const validURL = longURL.startsWith("http")
+  if (!validURL) {
+    return res.send("Please provide valid URL that starts with http");
+  }
   urlDatabase[req.params.id] = longURL;
   res.redirect('/urls');
 });
@@ -51,6 +59,7 @@ app.post('/urls/:id', (req, res) => {
 //cookie
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username);
+  res.cookie('user_id', req.body.username);
   return res.redirect('/urls');
   })
   app.post("/logout", (req, res) => {
@@ -79,6 +88,10 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
+});
+
+app.get("/register", (req, res) => {
+  res.redirect("urls_register");
 });
 
 app.get("/", (req, res) => {
