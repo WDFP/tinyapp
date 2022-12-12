@@ -14,6 +14,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -33,6 +46,19 @@ app.post("/urls", (req, res) => {
   urlDatabase[newId] = longURL;
   console.log(urlDatabase);
   res.redirect(`/urls/${newId}`); // Respond with redirect to newID
+});
+
+app.post("/register", (req, res) => {
+  const newID = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[newID] = {
+    id: newID,
+    email,
+    password,
+  };
+  res.cookie("user_id", newID);
+  res.redirect("/urls");
 });
 
 //delete
@@ -58,22 +84,27 @@ app.post('/urls/:id', (req, res) => {
 
 //cookie
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.cookie('user_id', req.body.username);
+  const email = req.body.email;
+  res.cookie('user_id', email);
   return res.redirect('/urls');
-  })
-  app.post("/logout", (req, res) => {
-    res.clearCookie("username", req.body.username )
-    res.redirect(`/urls`);
-  });
+})
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id' )
+  res.redirect(`/urls`);
+});
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userID = req.cookies["user_id"];
+  const user = users[userID];
+  const templateVars = { 
+    urls: urlDatabase, 
+    user,
+  };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
@@ -81,7 +112,7 @@ app.get("/urls/:id", (req, res) => {
   const shortUrl = req.params.id;
   //Use the id from the route parameter to lookup it's associated longURL from the urlDatabase
   // Original Template in M3W6
-  const templateVars = { id: shortUrl, longURL: urlDatabase[shortUrl], username: req.cookies["username"] };
+  const templateVars = { id: shortUrl, longURL: urlDatabase[shortUrl], user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -91,7 +122,8 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.redirect("urls_register");
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render("urls_register", templateVars);
 });
 
 app.get("/", (req, res) => {
