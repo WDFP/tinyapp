@@ -9,6 +9,9 @@ const generateRandomString = function () {
 
 app.set("view engine", "ejs");
 
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -27,8 +30,13 @@ const users = {
   },
 };
 
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+const getUserByEmail = (email) => {
+  for (let userEmail in users) {
+    if (users[userEmail].email === email) {
+      return true;
+    }}
+      return false;
+};
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
@@ -52,6 +60,12 @@ app.post("/register", (req, res) => {
   const newID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  if (email.length === 0 || password.length === 0) {
+    return res.status(400).send("Please enter valid Email and Password");
+  };
+  if (getUserByEmail(email)) {
+    return res.status(400).send("Email Inputted Already");
+  }
   users[newID] = {
     id: newID,
     email,
