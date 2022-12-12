@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const cookieParser = require('cookie-parser');
 const PORT = 8080; // default port 8080
 
 const generateRandomString = function () {
@@ -14,6 +15,7 @@ const urlDatabase = {
 };
 
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
@@ -46,20 +48,31 @@ app.post('/urls/:id', (req, res) => {
   res.redirect('/urls');
 });
 
+//cookie
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  return res.redirect('/urls');
+  })
+  app.post("/logout", (req, res) => {
+    res.clearCookie("username", req.body.username )
+    res.redirect(`/urls`);
+  });
+
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const shortUrl = req.params.id;
   //Use the id from the route parameter to lookup it's associated longURL from the urlDatabase
   // Original Template in M3W6
-  const templateVars = { id: shortUrl, longURL: urlDatabase[shortUrl] };
+  const templateVars = { id: shortUrl, longURL: urlDatabase[shortUrl], username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
