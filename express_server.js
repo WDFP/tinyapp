@@ -13,8 +13,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -46,6 +52,18 @@ const validatePassword = (user, givenPassword) => {
   return user.password === givenPassword;
 };
 
+// Create a function named urlsForUser(id) which returns the URLs where the userID is equal to the id of the currently logged-in user
+const urlsForUser = function(userID, urlDatabase) {
+  let userUrls= {};
+  for(let shortUrl in urlDatabase) {
+    const url = urlDatabase[shortUrl]
+    if (url.userID === userID) {
+      userUrls[shortUrl] = url;
+    }
+  }
+  return userUrls;
+};
+
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   const longURL = req.body.longURL;
@@ -64,7 +82,10 @@ app.post("/urls", (req, res) => {
   }
 
   const newId = generateRandomString();
-  urlDatabase[newId] = longURL;
+  urlDatabase[newId] = {
+    longURL,
+    userID: req.cookies.user_id,
+  }
   console.log(urlDatabase);
   res.redirect(`/urls/${newId}`); // Respond with redirect to newID
 });
@@ -90,6 +111,17 @@ app.post("/register", (req, res) => {
 
 //delete
 app.post("/urls/:id/delete", (req, res) => {
+
+  const userID = req.cookies.user_id;
+  const newLongURL = urlDatabase[req.params.id];
+
+  if (!userID) {
+    return res.status(404).send("You are not Logged In");
+  };
+  if (!newLongURL) {
+    return res.status(404).send("URL doesn't exist");
+  };
+  
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
@@ -105,7 +137,18 @@ app.post('/urls/:id', (req, res) => {
   if (!validURL) {
     return res.send("Please provide valid URL that starts with http");
   }
-  urlDatabase[req.params.id] = longURL;
+
+  const userID = req.cookies.user_id;
+  const newLongURL = urlDatabase[req.params.id];
+
+  if (!userID) {
+    return res.status(404).send("You are not Logged In");
+  };
+  if (!newLongURL) {
+    return res.status(404).send("URL doesn't exist");
+  };
+
+  urlDatabase[req.params.id].longURL = longURL;
   res.redirect('/urls');
 });
 
@@ -133,8 +176,12 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
+  if (!userID) {
+    return res.redirect("/login");
+  };
+  const urls = urlsForUser(userID, urlDatabase)
   const templateVars = { 
-    urls: urlDatabase, 
+    urls,
     user,
   };
   res.render("urls_index", templateVars);
@@ -151,16 +198,24 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const shortUrl = req.params.id;
-  //Use the id from the route parameter to lookup it's associated longURL from the urlDatabase
-  // Original Template in M3W6
-  const templateVars = { id: shortUrl, longURL: urlDatabase[shortUrl], user: users[req.cookies["user_id"]] };
+  const userID = req.cookies.user_id;
+  const newLongURL = urlDatabase[shortUrl];
+
+  if (!userID) {
+    return res.status(404).send("You are not Logged In");
+  };
+  if (!newLongURL) {
+    return res.status(404).send("URL doesn't exist");
+  };
+  
+  const templateVars = { id: shortUrl, longURL: newLongURL.longURL, user: users[userID] };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   if (!longURL) {
-    return res.send("ID does not exist");
+    return res.send("URL does not exist");
   }
   res.redirect(longURL);
 });
