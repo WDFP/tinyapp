@@ -58,6 +58,11 @@ app.post("/urls", (req, res) => {
     return res.send("Please provide valid URL that starts with http");
   }
 
+  const userIsLoggedIn = req.cookies.user_id;
+  if (!userIsLoggedIn) {
+    return res.status(400).send("Must Be Logged In to use ShortURL");
+  }
+
   const newId = generateRandomString();
   urlDatabase[newId] = longURL;
   console.log(urlDatabase);
@@ -128,8 +133,6 @@ app.post("/logout", (req, res) => {
 app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
-  console.log("userID", userID);
-  console.log("user", user);
   const templateVars = { 
     urls: urlDatabase, 
     user,
@@ -139,6 +142,10 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
+  const userIsLoggedIn = req.cookies.user_id; 
+  if (!userIsLoggedIn) {
+    return res.redirect("/login");
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -152,16 +159,27 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+  if (!longURL) {
+    return res.send("ID does not exist");
+  }
   res.redirect(longURL);
 });
 
 app.get("/register", (req, res) => {
+  const userIsLoggedIn = req.cookies.user_id;
   const templateVars = { user: users[req.cookies["user_id"]] };
+  if (userIsLoggedIn) {
+    return res.redirect("/urls");
+  }
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
+  const userIsLoggedIn = req.cookies.user_id;
   const templateVars = { user: users[req.cookies["user_id"]] };
+  if (userIsLoggedIn) {
+    return res.redirect("/urls");
+  }
   res.render("urls_login", templateVars);
 });
 
