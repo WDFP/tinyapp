@@ -52,7 +52,7 @@ const validatePassword = (user, givenPassword) => {
   return user.password === givenPassword;
 };
 
-// Create a function named urlsForUser(id) which returns the URLs where the userID is equal to the id of the currently logged-in user
+
 const urlsForUser = function(userID, urlDatabase) {
   let userUrls= {};
   for(let shortUrl in urlDatabase) {
@@ -65,7 +65,6 @@ const urlsForUser = function(userID, urlDatabase) {
 };
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   const longURL = req.body.longURL;
   if (!longURL) {
     return res.send("Please provide longURL");
@@ -76,9 +75,9 @@ app.post("/urls", (req, res) => {
     return res.send("Please provide valid URL that starts with http");
   }
 
-  const userIsLoggedIn = req.cookies.user_id;
-  if (!userIsLoggedIn) {
-    return res.status(400).send("Must Be Logged In to use ShortURL");
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    return res.send("Must Be Logged In to use ShortURL");
   }
 
   const newId = generateRandomString();
@@ -86,7 +85,6 @@ app.post("/urls", (req, res) => {
     longURL,
     userID: req.cookies.user_id,
   }
-  console.log(urlDatabase);
   res.redirect(`/urls/${newId}`); // Respond with redirect to newID
 });
 
@@ -95,10 +93,10 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (email.length === 0 || password.length === 0) {
-    return res.status(400).send("Please enter valid Email and Password");
+    return res.send("Please enter valid Email and Password");
   };
   if (getUserByEmail(email)) {
-    return res.status(400).send("Email Inputted Already");
+    return res.send("Email Inputted Already");
   }
   users[newID] = {
     id: newID,
@@ -116,10 +114,10 @@ app.post("/urls/:id/delete", (req, res) => {
   const newLongURL = urlDatabase[req.params.id];
 
   if (!userID) {
-    return res.status(404).send("You are not Logged In");
+    return res.send("You are not Logged In");
   };
   if (!newLongURL) {
-    return res.status(404).send("URL doesn't exist");
+    return res.send("URL doesn't exist");
   };
   
   delete urlDatabase[req.params.id];
@@ -142,10 +140,10 @@ app.post('/urls/:id', (req, res) => {
   const newLongURL = urlDatabase[req.params.id];
 
   if (!userID) {
-    return res.status(404).send("You are not Logged In");
+    return res.send("You are not Logged In");
   };
   if (!newLongURL) {
-    return res.status(404).send("URL doesn't exist");
+    return res.send("URL doesn't exist");
   };
 
   urlDatabase[req.params.id].longURL = longURL;
@@ -158,10 +156,10 @@ app.post('/login', (req, res) => {
   const user = getUserByEmail(email);
   const givenPassword = req.body.password;
   if (!user) {
-    return res.status(403).send("No Email Found");
+    return res.send("No Email Found");
   }
   else if (!validatePassword(user, givenPassword)) {
-      return res.status(403).send("Password Does Not Match");
+      return res.send("Password Does Not Match");
     }
   else {
     res.cookie('user_id', user.id);
@@ -202,10 +200,10 @@ app.get("/urls/:id", (req, res) => {
   const newLongURL = urlDatabase[shortUrl];
 
   if (!userID) {
-    return res.status(404).send("You are not Logged In");
+    return res.send("You are not Logged In");
   };
   if (!newLongURL) {
-    return res.status(404).send("URL doesn't exist");
+    return res.send("URL doesn't exist");
   };
   
   const templateVars = { id: shortUrl, longURL: newLongURL.longURL, user: users[userID] };
