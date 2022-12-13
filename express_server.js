@@ -21,7 +21,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "a",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -31,11 +31,19 @@ const users = {
 };
 
 const getUserByEmail = (email) => {
-  for (let userEmail in users) {
-    if (users[userEmail].email === email) {
-      return true;
-    }}
-      return false;
+  
+  for (let userID in users) {
+    const user = users[userID];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  
+  return false;
+};
+
+const validatePassword = (user, givenPassword) => {
+  return user.password === givenPassword;
 };
 
 app.post("/urls", (req, res) => {
@@ -99,17 +107,29 @@ app.post('/urls/:id', (req, res) => {
 //cookie
 app.post('/login', (req, res) => {
   const email = req.body.email;
-  res.cookie('user_id', email);
-  return res.redirect('/urls');
-})
+  const user = getUserByEmail(email);
+  const givenPassword = req.body.password;
+  if (!user) {
+    return res.status(403).send("No Email Found");
+  }
+  else if (!validatePassword(user, givenPassword)) {
+      return res.status(403).send("Password Does Not Match");
+    }
+  else {
+    res.cookie('user_id', user.id);
+    return res.redirect('/urls');
+}});
+
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id' )
-  res.redirect(`/urls`);
+  res.redirect(`/login`);
 });
 
 app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
   const user = users[userID];
+  console.log("userID", userID);
+  console.log("user", user);
   const templateVars = { 
     urls: urlDatabase, 
     user,
