@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const PORT = 8080; // default port 8080
 
 const generateRandomString = function () {
@@ -92,6 +93,7 @@ app.post("/register", (req, res) => {
   const newID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   if (email.length === 0 || password.length === 0) {
     return res.send("Please enter valid Email and Password");
   };
@@ -101,8 +103,9 @@ app.post("/register", (req, res) => {
   users[newID] = {
     id: newID,
     email,
-    password,
+    password: hashedPassword,
   };
+  console.log("Users object", users, "register Pass", password);
   res.cookie("user_id", newID);
   res.redirect("/urls");
 });
@@ -155,12 +158,17 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const user = getUserByEmail(email);
   const givenPassword = req.body.password;
+  const hashedPassword = user.password;
+  console.log("login user", user, "given Pass", givenPassword);
   if (!user) {
-    return res.send("No Email Found");
+    res.send("No Email Found");
   }
-  else if (!validatePassword(user, givenPassword)) {
-      return res.send("Password Does Not Match");
-    }
+  // else if (!validatePassword(user, givenPassword)) {
+  //   res.send("Password Does Not Match");
+  //   }
+  else if (!bcrypt.compareSync(givenPassword, hashedPassword)) {
+    res.send("Password Does Not Match");
+  }
   else {
     res.cookie('user_id', user.id);
     return res.redirect('/urls');
