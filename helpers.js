@@ -21,5 +21,19 @@ const getUserByEmail = (email, users) => {
 
   return false;
 };
+const urlsForUser = function (userID, urlDatabase) {
+  let userUrls = {};
+  for (let shortUrl in urlDatabase) {
+    const url = urlDatabase[shortUrl];
+    if (url.userID === userID) {
+      userUrls[shortUrl] = url;
+    }
+  }
+  return userUrls;
+};
 
-module.exports = { getUserByEmail };
+const generateRandomString = function () {
+  return Math.random().toString(36).substring(2, 8);
+};
+
+module.exports = { getUserByEmail, urlsForUser, generateRandomString };
