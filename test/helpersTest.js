@@ -20,12 +20,13 @@ describe("getUserByEmail", function () {
     const user = getUserByEmail("user@example.com", testUsers);
     const expectedUserID = "userRandomID";
     // Write your assert statement here
-    assert(user.id === expectedUserID, "User has a valid email");
-
-    it("should return undefined if not a valid email", function () {
-      const user = getUserByEmail("user@example.com", testUsers);
-      const expectedUserID = "userRandomID";
-      assert(user.id !== expectedUserID, "undefined");
-    });
+    assert(user.id, expectedUserID);
   });
+
+  it("should return undefined if not a valid email", function () {
+    const user = getUserByEmail("user@example.com", testUsers);
+    const expectedUserID = undefined;
+    assert(user.id, expectedUserID);
+  });
+
 });
